@@ -5,46 +5,64 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Registratore</title>
 <style>
-  :root { --bg:#fff; --fg:#37352f; --muted:#9b9a97; --line:#e9e9e7; --accent:#eb5757; --card:#f7f6f3; --ok:#2e7d32; }
-  @media (prefers-color-scheme: dark) {
-    :root { --bg:#191919; --fg:#ebebea; --muted:#8a8a87; --line:#2f2f2f; --card:#252525; --ok:#66bb6a; }
-  }
+  /* colori neutri a meta tono: restano leggibili su sfondo chiaro e scuro, sfondo trasparente */
+  :root { --fg:#6b6b67; --muted:#8c8b87; --line:rgba(128,128,128,.35); --soft:rgba(128,128,128,.12);
+          --accent:#e5484d; --ok:#2e9d57; }
   * { box-sizing: border-box; }
   [hidden] { display:none !important; }
-  body { margin:0; padding:16px; background:var(--bg); color:var(--fg);
+  html, body { background:transparent; }
+  body { margin:0; padding:12px; color:var(--fg);
          font-family: ui-sans-serif, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; }
   .wrap { max-width: 560px; margin: 0 auto; }
-  .panel { display:flex; align-items:center; gap:12px; background:var(--card);
-           border:1px solid var(--line); border-radius:10px; padding:14px; }
-  button { font:inherit; cursor:pointer; border:1px solid var(--line); background:var(--bg);
-           color:var(--fg); border-radius:8px; padding:8px 14px; }
-  button:hover { background:var(--card); }
-  button:disabled { opacity:.4; cursor:default; }
-  #rec { background:var(--accent); border-color:var(--accent); color:#fff; font-weight:600; }
-  #rec.on { background:var(--fg); border-color:var(--fg); color:var(--bg); }
-  #time { font-variant-numeric: tabular-nums; font-size:20px; min-width:64px; }
-  #meter { flex:1; min-width:24px; height:6px; background:var(--line); border-radius:3px; overflow:hidden; }
+
+  .panel { display:flex; align-items:center; gap:8px; }
+
+  button { font:inherit; color:var(--fg); cursor:pointer; background:var(--soft);
+           border:1px solid var(--line); border-radius:8px; }
+  button:hover:not(:disabled) { background:rgba(128,128,128,.22); }
+  button:disabled { opacity:.35; cursor:default; }
+  button svg { display:block; margin:auto; fill:currentColor; }
+
+  .ctl { width:44px; height:34px; padding:0; }
+  .ctl svg { width:14px; height:14px; }
+  #play.live { color:var(--accent); opacity:1; }
+  #play.live svg { animation: pulse 1.4s ease-in-out infinite; }
+  @keyframes pulse { 50% { opacity:.35; } }
+
+  #time { font-variant-numeric: tabular-nums; font-size:18px; min-width:56px; margin-left:4px; }
+  #meter { flex:1; min-width:24px; height:5px; background:var(--soft); border-radius:3px; overflow:hidden; }
   #bar { height:100%; width:0; background:var(--accent); transition:width .08s; }
-  #gear { position:relative; border:none; background:transparent; padding:6px; line-height:0; color:var(--muted); border-radius:50%; }
-  #gear:hover { color:var(--fg); background:var(--line); }
+
+  #gear { position:relative; width:30px; height:30px; padding:0; border:none; background:transparent; border-radius:50%; }
+  #gear:hover:not(:disabled) { background:var(--soft); }
   #gear svg { width:18px; height:18px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
   #gear .dot { position:absolute; top:3px; right:3px; width:7px; height:7px; border-radius:50%; background:var(--ok); }
-  #proj { width:100%; margin-top:10px; font:inherit; font-size:14px; color:var(--fg); background:var(--bg);
-          border:1px solid var(--line); border-radius:8px; padding:8px 10px; }
-  #msg { color:var(--muted); font-size:13px; margin:10px 2px; min-height:18px; }
+
+  #proj, .field input[type=text], .field input[type=password] {
+    font:inherit; font-size:14px; color:var(--fg); background:transparent;
+    border:1px solid var(--line); border-radius:8px; padding:8px 10px; }
+  #proj { width:100%; margin-top:10px; }
+  #proj::placeholder, .field input::placeholder { color:var(--muted); opacity:.7; }
+
   #settings { margin-top:10px; border:1px solid var(--line); border-radius:10px; padding:4px 14px 14px; }
   .field { display:flex; flex-direction:column; gap:3px; margin-top:10px; font-size:12px; color:var(--muted); }
-  .field input[type=text], .field input[type=password] { font:inherit; font-size:14px; color:var(--fg); background:var(--bg);
-                 border:1px solid var(--line); border-radius:6px; padding:6px 8px; }
+  .field input { padding:6px 8px !important; }
   .check { display:flex; align-items:center; gap:8px; margin-top:12px; font-size:13px; }
   .hint { font-size:12px; color:var(--muted); margin:10px 0 0; line-height:1.45; }
+  .tbtn { padding:6px 12px; font-size:13px; }
+
+  #msg { color:var(--muted); font-size:13px; margin:10px 2px; min-height:18px; }
+
   ul { list-style:none; padding:0; margin:12px 0 0; }
   li { border:1px solid var(--line); border-radius:10px; padding:10px; margin-bottom:8px; }
   li .row { display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;
             font-size:13px; color:var(--muted); gap:8px; }
+  li .row span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; min-width:0; }
   li audio { width:100%; }
-  .actions { display:flex; gap:6px; flex-wrap:wrap; }
-  .actions button { padding:4px 10px; font-size:13px; }
+  .actions { display:flex; gap:6px; flex-shrink:0; }
+  .ibtn { width:32px; height:28px; padding:0; }
+  .ibtn svg { width:15px; height:15px; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
+  .ibtn.done { color:var(--ok); opacity:1; }
   .st { font-size:12px; color:var(--muted); margin-top:6px; word-break:break-all; }
   .st.ok { color:var(--ok); } .st.err { color:var(--accent); }
 </style>
@@ -52,8 +70,15 @@
 <body>
 <div class="wrap">
   <div class="panel">
-    <button id="rec">● Registra</button>
-    <button id="pause" disabled>Pausa</button>
+    <button id="play" class="ctl" title="Registra" aria-label="Registra">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4.5v15a1 1 0 0 0 1.5.86l12.5-7.5a1 1 0 0 0 0-1.72L8.5 3.64A1 1 0 0 0 7 4.5z"/></svg>
+    </button>
+    <button id="pause" class="ctl" title="Pausa" aria-label="Pausa" disabled>
+      <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="4" width="4.2" height="16" rx="1"/><rect x="13.8" y="4" width="4.2" height="16" rx="1"/></svg>
+    </button>
+    <button id="stop" class="ctl" title="Stop" aria-label="Stop" disabled>
+      <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="5" width="14" height="14" rx="1.5"/></svg>
+    </button>
     <span id="time">00:00</span>
     <div id="meter"><div id="bar"></div></div>
     <button id="gear" title="Impostazioni" aria-label="Impostazioni">
@@ -78,10 +103,10 @@
       <input id="ghDir" type="text" autocomplete="off" placeholder="audio">
     </label>
     <label class="check"><input id="ghAuto" type="checkbox"> Salva su GitHub appena finisco di registrare</label>
-    <div class="actions" style="margin-top:12px">
-      <button id="ghSaveCfg">Salva</button>
-      <button id="ghTest">Verifica</button>
-      <button id="ghClear">Cancella token</button>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:12px">
+      <button id="ghSaveCfg" class="tbtn">Salva</button>
+      <button id="ghTest" class="tbtn">Verifica</button>
+      <button id="ghClear" class="tbtn">Cancella token</button>
     </div>
     <div class="st" id="cfgSt"></div>
     <p class="hint">Il token resta solo in questo browser e viene inviato soltanto a GitHub. Usa un token limitato a un solo repository privato.</p>
@@ -93,9 +118,17 @@
 
 <script>
 const $ = id => document.getElementById(id);
-const recBtn = $('rec'), pauseBtn = $('pause'), timeEl = $('time'), bar = $('bar'), msg = $('msg'), list = $('list');
+const playBtn = $('play'), pauseBtn = $('pause'), stopBtn = $('stop'),
+      timeEl = $('time'), bar = $('bar'), msg = $('msg'), list = $('list');
 
-let stream, recorder, chunks = [], startTs = 0, elapsed = 0, timer, audioCtx, analyser, raf;
+let stream, recorder, chunks = [], startTs = 0, elapsed = 0, timer, audioCtx, analyser, raf, starting = false;
+
+const ICON = {
+  download: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>',
+  trash:    '<svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>',
+  upload:   '<svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg>',
+  check:    '<svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>'
+};
 
 function pickMime() {
   const types = ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4', 'audio/ogg;codecs=opus'];
@@ -103,6 +136,15 @@ function pickMime() {
 }
 const fmt = s => String(Math.floor(s/60)).padStart(2,'0') + ':' + String(Math.floor(s%60)).padStart(2,'0');
 function tick() { timeEl.textContent = fmt(elapsed + (Date.now() - startTs)/1000); }
+
+// stato dei tre pulsanti: 'idle' | 'rec' | 'paused'
+function setUI(state) {
+  playBtn.disabled  = (state === 'rec');
+  pauseBtn.disabled = (state !== 'rec');
+  stopBtn.disabled  = (state === 'idle');
+  playBtn.classList.toggle('live', state === 'rec');
+  playBtn.title = playBtn.ariaLabel = (state === 'paused') ? 'Riprendi' : 'Registra';
+}
 
 function startMeter() {
   audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -125,14 +167,16 @@ function stopMeter() {
 }
 
 async function start() {
-  msg.textContent = '';
+  if (starting) return;
+  starting = true; msg.textContent = '';
   try {
     stream = await navigator.mediaDevices.getUserMedia({ audio: true });
   } catch (e) {
     msg.textContent = 'Microfono non disponibile: ' + (e.name === 'NotAllowedError'
       ? 'permesso negato. Se sei dentro Notion, apri la pagina in una scheda a parte.' : e.message);
-    return;
+    starting = false; return;
   }
+  starting = false;
   const mime = pickMime();
   recorder = new MediaRecorder(stream, mime ? { mimeType: mime } : undefined);
   chunks = [];
@@ -142,31 +186,33 @@ async function start() {
   startMeter();
   elapsed = 0; startTs = Date.now();
   timer = setInterval(tick, 250);
-  recBtn.textContent = '■ Stop'; recBtn.classList.add('on');
-  pauseBtn.disabled = false; pauseBtn.textContent = 'Pausa';
+  setUI('rec');
 }
 
-function stop() {
-  if (recorder.state === 'paused') startTs = Date.now();
-  else elapsed += (Date.now() - startTs) / 1000;
+function pauseRec() {
+  if (!recorder || recorder.state !== 'recording') return;
+  elapsed += (Date.now() - startTs) / 1000;
+  recorder.pause(); clearInterval(timer);
+  setUI('paused');
+}
+function resumeRec() {
+  startTs = Date.now(); recorder.resume();
+  timer = setInterval(tick, 250);
+  setUI('rec');
+}
+function stopRec() {
+  if (!recorder || recorder.state === 'inactive') return;
+  if (recorder.state === 'recording') elapsed += (Date.now() - startTs) / 1000;
   recorder.stop();
   stream.getTracks().forEach(t => t.stop());
   clearInterval(timer); stopMeter();
-  recBtn.textContent = '● Registra'; recBtn.classList.remove('on');
-  pauseBtn.disabled = true;
+  setUI('idle');
 }
 
-function togglePause() {
-  if (recorder.state === 'recording') {
-    elapsed += (Date.now() - startTs) / 1000;
-    recorder.pause(); clearInterval(timer);
-    pauseBtn.textContent = 'Riprendi';
-  } else if (recorder.state === 'paused') {
-    startTs = Date.now(); recorder.resume();
-    timer = setInterval(tick, 250);
-    pauseBtn.textContent = 'Pausa';
-  }
-}
+playBtn.onclick = () => (recorder && recorder.state === 'paused') ? resumeRec() : start();
+pauseBtn.onclick = pauseRec;
+stopBtn.onclick = stopRec;
+setUI('idle');
 
 /* ---------- Impostazioni GitHub ---------- */
 const CFG_KEY = 'rec-gh-cfg';
@@ -285,6 +331,12 @@ const PROJ_KEY = 'rec-project';
 try { $('proj').value = localStorage.getItem(PROJ_KEY) || ''; } catch (e) {}
 $('proj').addEventListener('input', () => { try { localStorage.setItem(PROJ_KEY, $('proj').value); } catch (e) {} });
 
+function iconBtn(icon, title) {
+  const b = document.createElement('button');
+  b.className = 'ibtn'; b.title = title; b.setAttribute('aria-label', title); b.innerHTML = icon;
+  return b;
+}
+
 function save() {
   const type = recorder.mimeType || 'audio/webm';
   const blob = new Blob(chunks, { type });
@@ -299,17 +351,17 @@ function save() {
   li.querySelector('audio').src = url;
 
   const a = document.createElement('a'); a.href = url; a.download = name;
-  const dl = document.createElement('button'); dl.textContent = 'Scarica';
+  const dl = iconBtn(ICON.download, 'Scarica');
   dl.onclick = () => a.click();
-  const del = document.createElement('button'); del.textContent = 'Elimina';
+  const del = iconBtn(ICON.trash, 'Elimina');
   del.onclick = () => { URL.revokeObjectURL(url); li.remove(); };
-  const gh = document.createElement('button'); gh.textContent = 'Salva su GitHub';
+  const gh = iconBtn(ICON.upload, 'Salva su GitHub');
   const doUpload = async () => {
     gh.disabled = true; st.className = 'st'; st.textContent = 'Caricamento su GitHub...';
     try {
       const link = await uploadToGitHub(blob, name, proj);
       st.className = 'st ok'; st.textContent = 'Salvata su GitHub' + (link ? ': ' + link : '.');
-      gh.textContent = 'Salvata';
+      gh.innerHTML = ICON.check; gh.classList.add('done'); gh.title = 'Salvata';
     } catch (e) {
       st.className = 'st err'; st.textContent = (e && e.message) || 'Errore di rete: controlla la connessione.';
       gh.disabled = false;
@@ -324,11 +376,8 @@ function save() {
   if (c.auto && c.token && c.owner && c.repo) doUpload();
 }
 
-recBtn.onclick = () => (recorder && recorder.state !== 'inactive') ? stop() : start();
-pauseBtn.onclick = togglePause;
-
 if (!navigator.mediaDevices || !window.MediaRecorder) {
-  recBtn.disabled = true;
+  playBtn.disabled = true;
   msg.textContent = 'Questo browser non supporta la registrazione audio.';
 }
 </script>
